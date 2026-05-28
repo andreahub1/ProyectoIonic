@@ -1,15 +1,17 @@
 import { Component } from '@angular/core';
-import { IonHeader, IonToolbar, IonTitle, IonContent } from '@ionic/angular/standalone';
+import { FormsModule } from '@angular/forms';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonItem, IonLabel, IonInput, IonButton, IonList } from '@ionic/angular/standalone';
 import { Task } from '../models/task.models';
 
 @Component({
   selector: 'app-home',
   templateUrl: 'home.page.html',
   styleUrls: ['home.page.scss'],
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent],
+  imports: [FormsModule, IonHeader, IonToolbar, IonTitle, IonContent, IonItem, IonLabel, IonInput, IonButton, IonList],
 })
 export class HomePage {
 
+  newTaskStr: string = '';
   // arreglo de tareas
   tasks: Task[] = [
     {
@@ -32,4 +34,19 @@ export class HomePage {
     console.log(this.tasks);
   }
 
+  addTask() {
+  console.log(this.newTaskStr);
+
+  const newTask: Task = {
+    id: Date.now(),
+    titulo: this.newTaskStr,
+    descripcion: '',
+    finalizado: false,
+    prioridad: 'Media'
+  };
+
+  this.tasks.push(newTask);
+  this.newTaskStr = '';
+  console.log(this.tasks);
+}
 }
