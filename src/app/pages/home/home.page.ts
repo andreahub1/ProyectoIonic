@@ -1,53 +1,222 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonItem, IonLabel, IonInput, IonButton, IonList, IonIcon } from '@ionic/angular/standalone';
+import {
+  IonContent,
+  IonHeader,
+  IonTitle,
+  IonToolbar,
+  IonButton,
+  IonIcon,
+  IonItem,
+  IonList,
+  IonLabel,
+  IonInput,
+  IonItemSliding,
+  IonItemOptions,
+  IonItemOption,
+  IonReorder,
+  IonReorderGroup
+} from '@ionic/angular/standalone';
+import { AlertController } from '@ionic/angular/standalone';
+
 import { Task } from '../../models/task.models';
 import { addIcons } from 'ionicons';
-import {addOutline} from 'ionicons/icons';
+import { addOutline } from 'ionicons/icons';
+
+import { Preferences } from '@capacitor/preferences';
+
 @Component({
   selector: 'app-home',
-  templateUrl: 'home.page.html',
-  styleUrls: ['home.page.scss'],
-  imports: [FormsModule, IonHeader, IonToolbar, IonTitle, IonContent, IonItem, IonLabel, IonInput, IonButton, IonList, IonIcon],
+  templateUrl: './home.page.html',
+  standalone: true,
+  imports: [
+    IonContent,
+    IonHeader,
+    IonIcon,
+    IonLabel,
+    IonList,
+    IonTitle,
+    IonButton,
+    IonToolbar,
+    CommonModule,
+    FormsModule,
+    IonItem,
+    IonInput,
+    IonItemSliding,
+    IonItemOptions,
+    IonItemOption,
+    IonReorder,
+    IonReorderGroup
+  ]
 })
-export class HomePage {
+export class HomePage implements OnInit {
 
   newTaskStr: string = '';
-  // arreglo de tareas
+
+  constTasksKey = 'tasks';
+
   tasks: Task[] = [
     {
       id: 1,
-      titulo: 'Configuracion ionic',
-      descripcion: 'Instalar Node.js, Angular CLI',
+      titulo: 'Configuración de Ionic',
+      descripcion: 'Instalar Node.js, AngularCli, Ionic',
       finalizado: true,
       prioridad: 'Alta'
     },
     {
       id: 2,
-      titulo: 'Configurar proyecto',
-      descripcion: 'Crear proyecto con Angular CLI',
-      finalizado: true,
-      prioridad: 'Alta'
+      titulo: 'Crear app tasklist',
+      descripcion: 'Crear el proyecto inicial de Ionic con Angular',
+      finalizado: false,
+      prioridad: 'Media'
     }
   ];
 
-  constructor() {
-    addIcons({addOutline})
+  constructor(private alertController: AlertController) {
+    addIcons({
+      addOutline
+    });
   }
 
-  addTask() {
-  console.log(this.newTaskStr);
+  async ionViewWillEnter() {
 
-  const newTask: Task = {
-    id: Date.now(),
-    titulo: this.newTaskStr,
-    descripcion: '',
-    finalizado: false,
-    prioridad: 'Media'
-  };
+    const { value } = await Preferences.get({
+      key: this.constTasksKey
+    });
 
-  this.tasks.push(newTask);
-  this.newTaskStr = '';
-  console.log(this.tasks);
-}
+    if (value) {
+      this.tasks = JSON.parse(value);
+    } else {
+      await this.guardarTareas();
+    }
+  }
+
+  async guardarTareas() {
+
+    await Preferences.set({
+      key: this.constTasksKey,
+      value: JSON.stringify(this.tasks)
+    });
+
+  }
+
+  async addTask() {
+
+    const titulo = this.newTaskStr.trim();
+
+    if (!titulo) {
+      alert('El título no puede estar vacío');
+      return;
+    }
+
+    const existe = this.tasks.some(
+      task => task.titulo === titulo
+    );
+
+    if (existe) {
+      alert('Ya existe una tarea con ese título');
+      return;
+    }
+
+    const newTask: Task = {
+      id: Date.now(),
+      titulo,
+      descripcion: '',
+      finalizado: false,
+      prioridad: 'Media'
+    };
+
+    this.tasks.push(newTask);
+    this.newTaskStr = '';
+
+    await this.guardarTareas();
+
+    await this.mostrarExito();
+  }
+
+  async mostrarExito() {
+
+    try {
+
+      console.log('MOSTRAR EXITO - INICIO');
+
+      const alert = await this.alertController.create({
+        header: 'Éxito',
+        message: 'Tarea agregada',
+        buttons: ['OK']
+      });
+
+      console.log('MOSTRAR EXITO - CREADA');
+
+      await alert.present();
+
+      console.log('MOSTRAR EXITO - PRESENTADA');
+
+    } catch (error) {
+
+      console.error('ERROR MOSTRAR EXITO:', error);
+
+    }
+
+  }
+  async confirmDelete(task: Task) {
+
+    try {
+
+      console.log('DELETE - INICIO');
+
+      const alert = await this.alertController.create({
+        header: 'Confirmar eliminación',
+        message: '¿Deseas eliminar esta tarea?',
+        buttons: [
+          {
+            text: 'Cancelar',
+            role: 'cancel'
+          },
+          {
+            text: 'Aceptar',
+            handler: () => {
+              this.deleteTask(task);
+            }
+          }
+        ]
+      });
+
+      console.log('DELETE - CREADA');
+
+      await alert.present();
+
+      console.log('DELETE - PRESENTADA');
+
+    } catch (error) {
+
+      console.error('ERROR DELETE:', error);
+
+    }
+
+  }
+  async deleteTask(taskRemove: Task) {
+
+    const index = this.tasks.findIndex(
+      task => task === taskRemove
+    );
+
+    if (index >= 0) {
+      this.tasks.splice(index, 1);
+
+      await this.guardarTareas();
+    }
+  }
+
+  async actualizarPosiciones(event: any) {
+
+    this.tasks = event.detail.complete(this.tasks);
+
+    await this.guardarTareas();
+
+  }
+
+  ngOnInit() {
+  }
 }

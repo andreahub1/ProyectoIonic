@@ -1,20 +1,60 @@
-<!-- 
- Andrea ledesma
--->
 <ion-header [translucent]="true">
   <ion-toolbar color="primary">
-    <ion-title>TaskList v2</ion-title>
+    <ion-title>TaskList V2</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
 
   <ion-item>
-    <ion-input type="text" placeholder="Ingresa una nueva tarea..." name="task" [(ngModel)]="newTaskStr"></ion-input>
-    <ion-button>
+    <ion-input
+      type="text"
+      placeholder="Ingresa una nueva tarea..."
+      name="task"
+      [(ngModel)]="newTaskStr">
+    </ion-input>
+
+    <ion-button (click)="addTask()">
       <ion-icon name="add-outline"></ion-icon>
     </ion-button>
-
   </ion-item>
+
+  <ion-list>
+
+    <ion-reorder-group
+      [disabled]="false"
+      (ionItemReorder)="actualizarPosiciones($event)">
+
+      <ion-item-sliding *ngFor="let task of tasks">
+
+        <ion-item>
+
+          <ion-label>
+            <h2>{{ task.titulo }}</h2>
+            <p>{{ task.descripcion }}</p>
+            <p>Prioridad: {{ task.prioridad }}</p>
+          </ion-label>
+
+          <ion-reorder slot="end"></ion-reorder>
+
+        </ion-item>
+
+        <ion-item-options side="end">
+
+          <ion-item-option
+            color="danger"
+            (click)="confirmDelete(task)">
+
+            Eliminar
+
+          </ion-item-option>
+
+        </ion-item-options>
+
+      </ion-item-sliding>
+
+    </ion-reorder-group>
+
+  </ion-list>
 
 </ion-content>
