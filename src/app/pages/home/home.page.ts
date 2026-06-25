@@ -22,7 +22,7 @@ import { AlertController } from '@ionic/angular/standalone';
 
 import { Task } from '../../models/task.models';
 import { addIcons } from 'ionicons';
-import { addOutline } from 'ionicons/icons';
+import { addOutline, trashOutline } from 'ionicons/icons';
 
 import { Preferences } from '@capacitor/preferences';
 
@@ -75,7 +75,8 @@ export class HomePage implements OnInit {
 
   constructor(private alertController: AlertController) {
     addIcons({
-      addOutline
+      addOutline,
+      trashOutline
     });
   }
 
@@ -107,15 +108,17 @@ export class HomePage implements OnInit {
 
     if (!titulo) {
       alert('El título no puede estar vacío');
+      this.newTaskStr = '';
       return;
     }
 
     const existe = this.tasks.some(
-      task => task.titulo === titulo
+      task => task.titulo.toLowerCase() === titulo.toLowerCase()
     );
 
     if (existe) {
       alert('Ya existe una tarea con ese título');
+      this.newTaskStr = '';
       return;
     }
 
@@ -131,7 +134,6 @@ export class HomePage implements OnInit {
     this.newTaskStr = '';
 
     await this.guardarTareas();
-
     await this.mostrarExito();
   }
 
@@ -139,19 +141,13 @@ export class HomePage implements OnInit {
 
     try {
 
-      console.log('MOSTRAR EXITO - INICIO');
-
       const alert = await this.alertController.create({
         header: 'Éxito',
         message: 'Tarea agregada',
         buttons: ['OK']
       });
 
-      console.log('MOSTRAR EXITO - CREADA');
-
       await alert.present();
-
-      console.log('MOSTRAR EXITO - PRESENTADA');
 
     } catch (error) {
 
@@ -160,11 +156,10 @@ export class HomePage implements OnInit {
     }
 
   }
+
   async confirmDelete(task: Task) {
 
     try {
-
-      console.log('DELETE - INICIO');
 
       const alert = await this.alertController.create({
         header: 'Confirmar eliminación',
@@ -183,11 +178,7 @@ export class HomePage implements OnInit {
         ]
       });
 
-      console.log('DELETE - CREADA');
-
       await alert.present();
-
-      console.log('DELETE - PRESENTADA');
 
     } catch (error) {
 
@@ -196,6 +187,7 @@ export class HomePage implements OnInit {
     }
 
   }
+
   async deleteTask(taskRemove: Task) {
 
     const index = this.tasks.findIndex(
